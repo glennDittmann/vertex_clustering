@@ -70,7 +70,7 @@ impl VertexClusterer3 {
     }
 
     /// Returns the range of the bin at the given indices, as `(start_x, end_x, start_y, end_y, start_z, end_z)`.
-    pub fn bin_range(
+    fn bin_range(
         &self,
         x_idx: usize,
         y_idx: usize,
@@ -87,13 +87,14 @@ impl VertexClusterer3 {
         (start_x, end_x, start_y, end_y, start_z, end_z)
     }
 
+    /// Get the bin size.
     pub fn bin_size(&self) -> f64 {
         self.bin_size
     }
 
     /// Get the bin at the given position.
     ///
-    /// (0, 0) is the bottom left bin.
+    /// (0, 0, 0) is the bottom left bin.
     pub fn get_bin(&self, x_idx: usize, y_idx: usize, z_idx: usize) -> Option<&Bin> {
         if x_idx < self.num_bins_x && y_idx < self.num_bins_y && z_idx < self.num_bins_z {
             let bin = &self.bins[x_idx][y_idx][z_idx];
@@ -106,6 +107,7 @@ impl VertexClusterer3 {
         }
     }
 
+    /// Get the mean of the bin at the given position.
     pub fn get_bin_mean(&self, x_idx: usize, y_idx: usize, z_idx: usize) -> Option<(Vertex3, f64)> {
         if let Some(bin) = self.get_bin(x_idx, y_idx, z_idx) {
             let mut sum_x = 0.0;
@@ -130,14 +132,6 @@ impl VertexClusterer3 {
             ));
         }
         None
-    }
-
-    pub fn max(&self) -> Vertex3 {
-        self.last_bin_interval_start
-    }
-
-    pub fn min(&self) -> Vertex3 {
-        self.first_bin_interval_start
     }
 
     /// Map a point to its corresponding bin.
@@ -192,23 +186,27 @@ impl VertexClusterer3 {
         }
     }
 
+    /// Get the number of bins.
     pub fn num_bins(&self) -> usize {
         self.num_bins_x * self.num_bins_y * self.num_bins_z
     }
 
+    /// Get the number of bins in the x-direction.
     pub fn num_bins_x(&self) -> usize {
         self.num_bins_x
     }
 
+    /// Get the number of bins in the y-direction.
     pub fn num_bins_y(&self) -> usize {
         self.num_bins_y
     }
 
+    /// Get the number of bins in the z-direction.
     pub fn num_bins_z(&self) -> usize {
         self.num_bins_z
     }
 
-    /// Simplifies the binned point cloud, i.e. returns the mean of each bin.
+    /// Simplifies the clustered point cloud, i.e. returns the mean of each bin.
     pub fn simplify(&self) -> (Vec<Vertex3>, Vec<f64>) {
         let mut simplified_vertices = Vec::new();
         let mut simplified_weights = Vec::new();
@@ -227,6 +225,7 @@ impl VertexClusterer3 {
         (simplified_vertices, simplified_weights)
     }
 
+    /// Get all vertices in the bins.
     pub fn vertices(&self) -> Vec<&(Vertex3, f64)> {
         self.bins
             .iter()
@@ -259,7 +258,7 @@ impl fmt::Display for VertexClusterer3 {
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::sample_vertices_3d;
+    use rand::{distributions::Uniform, prelude::Distribution};
 
     use super::*;
 
@@ -293,7 +292,17 @@ mod tests {
 
     #[test]
     fn test_vertex_clusterer_3d() {
-        let vertices = sample_vertices_3d(1000, None);
+        let mut rng = rand::thread_rng();
+        let uniform = Uniform::from(-0.5..=0.5);
+
+        let mut vertices: Vec<[f64; 3]> = Vec::with_capacity(1000);
+        for _ in 0..1000 {
+            let x = uniform.sample(&mut rng);
+            let y = uniform.sample(&mut rng);
+            let z = uniform.sample(&mut rng);
+
+            vertices.push([x, y, z]);
+        }
 
         let sampler = VertexClusterer3::new(vertices, None, 0.1);
         validate_sampler(&sampler);

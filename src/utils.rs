@@ -1,6 +1,3 @@
-use rand::{distributions::Uniform, prelude::Distribution};
-use std::ops::RangeInclusive;
-
 pub type Vertex2 = [f64; 2];
 pub type Vertex3 = [f64; 3];
 pub type Vertex4 = [f64; 4];
@@ -87,59 +84,4 @@ pub fn bbox_4d(vertices: &[Vertex4]) -> (Vertex4, Vertex4) {
     }
 
     (min, max)
-}
-
-/// Samples `n` vertices in 2D space from the [standard] distribution.
-///
-/// If no range is specified, the unit-square centered around the origin is used, i.e. `[-0.5, 0.5]`.
-pub fn sample_vertices_2d(n: usize, range: Option<RangeInclusive<f64>>) -> Vec<Vertex2> {
-    let mut rng = rand::thread_rng();
-    let range = range.unwrap_or(-0.5..=0.5);
-    let uniform = Uniform::from(range);
-
-    let mut vertices: Vec<[f64; 2]> = Vec::with_capacity(n);
-    for _ in 0..n {
-        let x = uniform.sample(&mut rng);
-        let y = uniform.sample(&mut rng);
-        vertices.push([x, y]);
-    }
-
-    vertices
-}
-
-/// Samples `n` vertices in 3D space from the [standard] distribution.
-pub fn sample_vertices_3d(n: usize, range: Option<RangeInclusive<f64>>) -> Vec<Vertex3> {
-    let mut rng = rand::thread_rng();
-    let range = range.unwrap_or(-0.5..=0.5);
-    let uniform = Uniform::from(range);
-
-    let mut vertices: Vec<[f64; 3]> = Vec::with_capacity(n);
-    for _ in 0..n {
-        let x = uniform.sample(&mut rng);
-        let y = uniform.sample(&mut rng);
-        let z = uniform.sample(&mut rng);
-
-        vertices.push([x, y, z]);
-    }
-
-    vertices
-}
-
-/// Samples `n` vertices in 3D space from the [standard] distribution.
-pub fn sample_vertices_4d(n: usize, range: Option<RangeInclusive<f64>>) -> Vec<Vertex4> {
-    let mut rng = rand::thread_rng();
-    let range = range.unwrap_or(-0.5..=0.5);
-    let uniform = Uniform::from(range);
-
-    let mut vertices: Vec<Vertex4> = Vec::with_capacity(n);
-    for _ in 0..n {
-        let x = uniform.sample(&mut rng);
-        let y = uniform.sample(&mut rng);
-        let z = uniform.sample(&mut rng);
-        let s = uniform.sample(&mut rng);
-
-        vertices.push([x, y, z, s]);
-    }
-
-    vertices
 }

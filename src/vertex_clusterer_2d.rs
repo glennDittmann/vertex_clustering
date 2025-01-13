@@ -57,7 +57,7 @@ impl VertexClusterer2 {
         sampler
     }
 
-    pub fn bin_range(&self, x_idx: usize, y_idx: usize) -> (f64, f64, f64, f64) {
+    fn bin_range(&self, x_idx: usize, y_idx: usize) -> (f64, f64, f64, f64) {
         let start_x = self.first_bin_interval_start[0] + x_idx as f64 * self.bin_size;
         let start_y = self.first_bin_interval_start[1] + y_idx as f64 * self.bin_size;
 
@@ -67,6 +67,7 @@ impl VertexClusterer2 {
         (start_x, end_x, start_y, end_y)
     }
 
+    /// Get the bin size.
     pub fn bin_size(&self) -> f64 {
         self.bin_size
     }
@@ -86,6 +87,7 @@ impl VertexClusterer2 {
         }
     }
 
+    /// Get the mean of the bin at the given position.
     pub fn get_bin_mean(&self, x: usize, y: usize) -> Option<(Vertex2, f64)> {
         if let Some(bin) = self.get_bin(x, y) {
             let mut sum_x = 0.0;
@@ -104,14 +106,6 @@ impl VertexClusterer2 {
             ));
         }
         None
-    }
-
-    pub fn max(&self) -> Vertex2 {
-        self.last_bin_interval_start
-    }
-
-    pub fn min(&self) -> Vertex2 {
-        self.first_bin_interval_start
     }
 
     /// Map a point to its corresponding bin.
@@ -155,14 +149,17 @@ impl VertexClusterer2 {
         }
     }
 
+    /// Get the number of bins.
     pub fn num_bins(&self) -> usize {
         self.num_bins_x * self.num_bins_y
     }
 
+    /// Get the number of bins in the x-direction.
     pub fn num_bins_x(&self) -> usize {
         self.num_bins_x
     }
 
+    /// Get the number of bins in the y-direction.
     pub fn num_bins_y(&self) -> usize {
         self.num_bins_y
     }
@@ -183,6 +180,7 @@ impl VertexClusterer2 {
         (simplified_vertices, simplified_weights)
     }
 
+    /// Get all vertices in the bins.
     pub fn vertices(&self) -> Vec<&(Vertex2, f64)> {
         self.bins
             .iter()
@@ -211,7 +209,7 @@ impl fmt::Display for VertexClusterer2 {
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::sample_vertices_2d;
+    use rand::{distributions::Uniform, prelude::Distribution};
 
     use super::*;
 
@@ -238,7 +236,15 @@ mod tests {
 
     #[test]
     fn test_vertex_clusterer_2d() {
-        let vertices = sample_vertices_2d(1000, None);
+        let mut rng = rand::thread_rng();
+        let uniform = Uniform::from(-0.5..=0.5);
+
+        let mut vertices: Vec<[f64; 2]> = Vec::with_capacity(1000);
+        for _ in 0..1000 {
+            let x = uniform.sample(&mut rng);
+            let y = uniform.sample(&mut rng);
+            vertices.push([x, y]);
+        }
 
         let sampler = VertexClusterer2::new(vertices, None, 0.1);
         validate_sampler(&sampler);

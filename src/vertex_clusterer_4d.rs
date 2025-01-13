@@ -19,14 +19,14 @@ pub struct VertexClusterer4 {
     num_bins_x: usize,
     num_bins_y: usize,
     num_bins_z: usize,
-    num_bins_s: usize,
+    num_bins_w: usize,
     weighted: bool,
 }
 
 impl VertexClusterer4 {
     /// Create a `VertexClusterer4` from a list of vertices.
     pub fn new(vertices: Vec<Vertex4>, weights: Option<Vec<f64>>, bin_size: f64) -> Self {
-        let ([min_x, min_y, min_z, min_s], [max_x, max_y, max_z, max_s]) = bbox_4d(&vertices);
+        let ([min_x, min_y, min_z, min_w], [max_x, max_y, max_z, max_w]) = bbox_4d(&vertices);
 
         let last_bin_x_start = next_value_down_relative(max_x, min_x, bin_size);
         let last_bin_x_end = next_value_up_relative(max_x, min_x, bin_size);
@@ -37,23 +37,23 @@ impl VertexClusterer4 {
         let last_bin_z_start = next_value_down_relative(max_z, min_z, bin_size);
         let last_bin_z_end = next_value_up_relative(max_z, min_z, bin_size);
 
-        let last_bin_s_start = next_value_down_relative(max_s, min_s, bin_size);
-        let last_bin_s_end = next_value_up_relative(max_s, min_s, bin_size);
+        let last_bin_w_start = next_value_down_relative(max_w, min_w, bin_size);
+        let last_bin_w_end = next_value_up_relative(max_w, min_w, bin_size);
 
         // There is always at least one bin (in x & y-direction). Compute the number of extra bins
         let mut extra_bins_x = (last_bin_x_end - bin_size - min_x) / bin_size;
         let mut extra_bins_y = (last_bin_y_end - bin_size - min_y) / bin_size;
         let mut extra_bins_z = (last_bin_z_end - bin_size - min_z) / bin_size;
-        let mut extra_bins_s = (last_bin_s_end - bin_size - min_s) / bin_size;
+        let mut extra_bins_w = (last_bin_w_end - bin_size - min_w) / bin_size;
         extra_bins_x = round_to_closest_integer(extra_bins_x);
         extra_bins_y = round_to_closest_integer(extra_bins_y);
         extra_bins_z = round_to_closest_integer(extra_bins_z);
-        extra_bins_s = round_to_closest_integer(extra_bins_s);
+        extra_bins_w = round_to_closest_integer(extra_bins_w);
 
         let num_bins_x = extra_bins_x + 1.0;
         let num_bins_y = extra_bins_y + 1.0;
         let num_bins_z = extra_bins_z + 1.0;
-        let num_bins_s = extra_bins_s + 1.0;
+        let num_bins_s = extra_bins_w + 1.0;
 
         let mut sampler = Self {
             bin_size,
@@ -67,17 +67,17 @@ impl VertexClusterer4 {
                 ];
                 num_bins_x.floor() as usize
             ],
-            first_bin_interval_start: [min_x, min_y, min_z, min_s],
+            first_bin_interval_start: [min_x, min_y, min_z, min_w],
             last_bin_interval_start: [
                 last_bin_x_start,
                 last_bin_y_start,
                 last_bin_z_start,
-                last_bin_s_start,
+                last_bin_w_start,
             ],
             num_bins_x: num_bins_x.floor() as usize,
             num_bins_y: num_bins_y.floor() as usize,
             num_bins_z: num_bins_z.floor() as usize,
-            num_bins_s: num_bins_s.floor() as usize,
+            num_bins_w: num_bins_s.floor() as usize,
             weighted: weights.is_some(),
         };
 
@@ -89,7 +89,7 @@ impl VertexClusterer4 {
     }
 
     /// Returns the range of the bin at the given indices, as `(start_x, end_x, start_y, end_y, start_z, end_z)`.
-    pub fn bin_range(
+    fn bin_range(
         &self,
         x_idx: usize,
         y_idx: usize,
@@ -111,13 +111,14 @@ impl VertexClusterer4 {
         )
     }
 
+    /// Get the bin size.
     pub fn bin_size(&self) -> f64 {
         self.bin_size
     }
 
     /// Get the bin at the given position.
     ///
-    /// (0, 0) is the bottom left bin.
+    /// (0, 0, 0, 0) is the bottom left bin.
     pub fn get_bin(&self, x_idx: usize, y_idx: usize, z_idx: usize, s_idx: usize) -> Option<&Bin> {
         if x_idx < self.num_bins_x && y_idx < self.num_bins_y && z_idx < self.num_bins_z {
             let bin = &self.bins[x_idx][y_idx][z_idx][s_idx];
@@ -130,6 +131,7 @@ impl VertexClusterer4 {
         }
     }
 
+    /// Get the mean of the bin at the given position.
     pub fn get_bin_mean(
         &self,
         x_idx: usize,
@@ -163,14 +165,6 @@ impl VertexClusterer4 {
             ));
         }
         None
-    }
-
-    pub fn max(&self) -> Vertex4 {
-        self.last_bin_interval_start
-    }
-
-    pub fn min(&self) -> Vertex4 {
-        self.first_bin_interval_start
     }
 
     /// Map a point to its corresponding bin.
@@ -239,27 +233,32 @@ impl VertexClusterer4 {
         }
     }
 
+    /// Get the number of bins.
     pub fn num_bins(&self) -> usize {
-        self.num_bins_x * self.num_bins_y * self.num_bins_z * self.num_bins_s
+        self.num_bins_x * self.num_bins_y * self.num_bins_z * self.num_bins_w
     }
 
+    /// Get the number of bins in the x-direction.
     pub fn num_bins_x(&self) -> usize {
         self.num_bins_x
     }
 
+    /// Get the number of bins in the y-direction.
     pub fn num_bins_y(&self) -> usize {
         self.num_bins_y
     }
 
+    /// Get the number of bins in the z-direction.
     pub fn num_bins_z(&self) -> usize {
         self.num_bins_z
     }
 
-    pub fn num_bins_s(&self) -> usize {
-        self.num_bins_s
+    /// Get the number of bins in the w-direction.
+    pub fn num_bins_w(&self) -> usize {
+        self.num_bins_w
     }
 
-    /// Simplifies the binned point cloud, i.e. returns the mean of each bin.
+    /// Simplifies the clustered point cloud, i.e. returns the mean of each bin.
     pub fn simplify(&self) -> (Vec<Vertex4>, Vec<f64>) {
         let mut simplified_vertices = Vec::new();
         let mut simplified_weights = Vec::new();
@@ -267,7 +266,7 @@ impl VertexClusterer4 {
         for x_idx in 0..self.num_bins_x {
             for y_idx in 0..self.num_bins_y {
                 for z_idx in 0..self.num_bins_z {
-                    for s_idx in 0..self.num_bins_s {
+                    for s_idx in 0..self.num_bins_w {
                         if let Some((mean_vertex, mean_weight)) =
                             self.get_bin_mean(x_idx, y_idx, z_idx, s_idx)
                         {
@@ -281,6 +280,7 @@ impl VertexClusterer4 {
         (simplified_vertices, simplified_weights)
     }
 
+    /// Get all vertices in the bins.
     pub fn vertices(&self) -> Vec<&(Vertex4, f64)> {
         self.bins
             .iter()
@@ -297,7 +297,7 @@ impl fmt::Display for VertexClusterer4 {
         for x_idx in 0..self.num_bins_x {
             for y_idx in 0..self.num_bins_y {
                 for z_idx in 0..self.num_bins_z {
-                    for s_idx in 0..self.num_bins_s {
+                    for s_idx in 0..self.num_bins_w {
                         writeln!(
                             f,
                             "Bin ({}, {}, {}, {}): {:?}",
@@ -317,7 +317,7 @@ impl fmt::Display for VertexClusterer4 {
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::sample_vertices_4d;
+    use rand::{distributions::Uniform, prelude::Distribution};
 
     use super::*;
 
@@ -327,7 +327,7 @@ mod tests {
         for x_idx in 0..sampler.num_bins_x {
             for y_idx in 0..sampler.num_bins_y {
                 for z_idx in 0..sampler.num_bins_z {
-                    for s_idx in 0..sampler.num_bins_s {
+                    for s_idx in 0..sampler.num_bins_w {
                         if let Some(bin) = sampler.get_bin(x_idx, y_idx, z_idx, s_idx) {
                             let (start_x, end_x, start_y, end_y, start_z, end_z, start_s, end_s) =
                                 sampler.bin_range(x_idx, y_idx, z_idx, s_idx);
@@ -357,7 +357,18 @@ mod tests {
 
     #[test]
     fn test_vertex_clusterer_4d() {
-        let vertices = sample_vertices_4d(1000, None);
+        let mut rng = rand::thread_rng();
+        let uniform = Uniform::from(-0.5..=0.5);
+
+        let mut vertices: Vec<Vertex4> = Vec::with_capacity(1000);
+        for _ in 0..1000 {
+            let x = uniform.sample(&mut rng);
+            let y = uniform.sample(&mut rng);
+            let z = uniform.sample(&mut rng);
+            let s = uniform.sample(&mut rng);
+
+            vertices.push([x, y, z, s]);
+        }
 
         let sampler = VertexClusterer4::new(vertices, None, 0.1);
         validate_sampler(&sampler);
