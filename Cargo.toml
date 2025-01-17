@@ -1,6 +1,9 @@
 [package]
+authors = ["Glenn Dittmann"]
+keywords = ["computer-graphics", "math", "vertex", "clustering"]
 name = "vertex_clustering"
-version = "0.1.1"
+repository = "https://github.com/glennDittmann/vertex_clustering"
+version = "0.1.2"
 edition = "2021"
 description = "A simple implementation of vertex clustering."
 license = "MIT OR Apache-2.0"
