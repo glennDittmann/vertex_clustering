@@ -10,3 +10,6 @@ mod utils;
 pub mod vertex_clusterer_2d;
 pub mod vertex_clusterer_3d;
 pub mod vertex_clusterer_4d;
+
+#[cfg(feature = "wasm")]
+pub mod wasm;

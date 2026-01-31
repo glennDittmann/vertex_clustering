@@ -17,6 +17,10 @@ The figures below shows an example visualization of clustering a small set of ve
 
 ![clustering-example](.readme/clustering-example.png)
 
+## Exporting to wasm
+You can export the crate to `wasm` locally by running `wasm-pack build --target web --features wasm `.
+It is also directly availabe via `npm`.
+
 ## References
 [1] J. Rossignac and P. Borrel, “Multi-resolution 3D approximations for rendering complex
 scenes,” Modeling in computer graphics: methods and applications. Springer, pp. 455–
